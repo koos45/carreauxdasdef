@@ -4,84 +4,495 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Carreaux Das — Carrelage d'architecte à prix direct négoce</title>
-  <!-- Bootstrap 5.3 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
     :root {
-      --cd-green: #1e4d3b;
-      --cd-green-hover: #163a2c;
-      --cd-cream: #f7f5f0;
-      --cd-gold: #e6b85c;
+      --green: #1e4d3b;
+      --green-dark: #143629;
+      --green-soft: #e8f0ec;
+      --cream: #f7f5f0;
+      --gold: #e6b85c;
+      --text: #1c221f;
+      --muted: #5c6661;
+      --border: #e4e0d8;
     }
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background-color: var(--cd-cream);
-      color: #1f2421;
-    }
-    .top-banner {
-      background-color: #1a241f;
-      color: #ffffff;
-      font-size: 0.85rem;
-    }
-    .btn-cd-green {
-      background-color: var(--cd-green);
-      color: #ffffff;
-      border: none;
-    }
-    .btn-cd-green:hover {
-      background-color: var(--cd-green-hover);
-      color: #ffffff;
-    }
-    .btn-cd-gold {
-      background-color: var(--cd-gold);
-      color: #1a241f;
-      font-weight: 600;
-    }
-    .hero-card {
-      background-color: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    }
-    .filter-pill {
-      border-radius: 50rem;
-      border: 1px solid #d1d5db;
-      background-color: #ffffff;
-      color: #1f2421;
-      transition: all 0.2s;
-    }
-    .filter-pill.active, .filter-pill:hover {
-      background-color: var(--cd-green);
-      color: #ffffff;
-      border-color: var(--cd-green);
-    }
-    .product-card {
-      border: none;
-      border-radius: 12px;
-      overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .product-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--cream); color: var(--text); line-height: 1.5; }
+    .topbar { background: #16211c; color: #fff; text-align: center; padding: 9px 12px; font-size: 13px; letter-spacing: 0.2px; }
+    header { background: #fff; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 30; }
+    .nav { max-width: 1220px; margin: auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--green); }
+    .logo-box { width: 40px; height: 40px; border-radius: 10px; background: var(--green); color: var(--gold); display: grid; place-items: center; font-weight: 900; font-size: 18px; }
+    .brand-title { font-weight: 800; font-size: 21px; line-height: 1.1; }
+    .brand-sub { display: block; font-size: 11px; color: var(--muted); font-weight: 500; }
+    .nav-links { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .nav-links a { text-decoration: none; color: var(--text); font-size: 14px; font-weight: 600; }
+    .nav-links a:hover { color: var(--green); }
+    .btn { padding: 10px 18px; border-radius: 9px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-green:hover { background: var(--green-dark); }
+    .btn-gold { background: var(--gold); color: #16211c; }
+    .btn-gold:hover { filter: brightness(0.95); }
+    .btn-outline { background: #fff; border: 1px solid #cbd2ce; color: var(--text); }
+    .btn-outline:hover { border-color: var(--green); color: var(--green); }
+    .btn-danger { background: #b91c1c; color: #fff; padding: 6px 10px; font-size: 12px; }
+
+    .container { max-width: 1220px; margin: auto; padding: 28px 20px; }
+    .alert-banner { background: var(--green-soft); border: 1px solid var(--green); color: var(--green-dark); padding: 12px 18px; border-radius: 10px; margin-bottom: 20px; font-weight: 600; display: none; }
+
+    .hero { background: #fff; border-radius: 18px; padding: 40px; display: grid; grid-template-columns: 1.15fr 1fr; gap: 32px; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid var(--border); }
+    .badge-tag { display: inline-block; background: var(--green-soft); color: var(--green); padding: 5px 12px; border-radius: 99px; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .hero h1 { font-size: 36px; line-height: 1.15; margin: 14px 0 16px; color: #131916; }
+    .hero p { color: var(--muted); font-size: 15px; margin-bottom: 24px; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero-img { width: 100%; height: 310px; object-fit: cover; border-radius: 14px; }
+
+    .trust-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 24px 0 32px; }
+    .trust-item { background: #fff; padding: 14px 18px; border-radius: 12px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .trust-pill { background: var(--green); color: #fff; font-size: 11px; padding: 3px 8px; border-radius: 99px; }
+
+    .section-head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+    .section-head h2 { font-size: 24px; color: var(--green); }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .pill { padding: 8px 16px; border-radius: 99px; border: 1px solid #cfd5d1; background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; }
+    .pill.active, .pill:hover { background: var(--green); color: #fff; border-color: var(--green); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)); gap: 22px; }
+    .card { background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
+    .card img { width: 100%; height: 205px; object-fit: cover; background: #e8ece9; }
+    .card-body { padding: 18px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .card-cat { font-size: 12px; color: var(--green); font-weight: 700; text-transform: uppercase; }
+    .card-title { font-size: 18px; font-weight: 700; margin: 4px 0; }
+    .card-meta { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid #f0ede6; }
+    .card-price { font-size: 21px; font-weight: 800; color: var(--green); }
+
+    .pose-box { background: #fff; border-radius: 16px; padding: 32px; margin-top: 40px; border: 1px solid var(--border); display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; align-items: center; }
+    .pose-box h2 { color: var(--green); margin-bottom: 10px; }
+    .pose-list { list-style: none; margin: 14px 0 20px; font-size: 14px; color: var(--muted); }
+    .pose-list li { margin-bottom: 6px; }
+
+    .input { width: 100%; padding: 10px 12px; border: 1px solid #cbd2ce; border-radius: 8px; margin-bottom: 10px; font-size: 14px; font-family: inherit; }
+    .input:focus { outline: none; border-color: var(--green); }
+
+    footer { background: #16211c; color: #cfd6d2; padding: 36px 20px; margin-top: 54px; font-size: 13px; }
+    .footer-inner { max-width: 1220px; margin: auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 60; align-items: center; justify-content: center; padding: 16px; }
+    .modal.open { display: flex; }
+    .modal-box { background: #fff; border-radius: 16px; max-width: 500px; width: 100%; padding: 26px; max-height: 90vh; overflow-y: auto; }
+    .modal-box h3 { margin-bottom: 14px; color: var(--green); font-size: 20px; }
+    .calc-preview { background: var(--green-soft); padding: 12px; border-radius: 10px; margin: 12px 0; font-size: 14px; }
+
+    @media (max-width: 820px) {
+      .hero, .pose-box { grid-template-columns: 1fr; padding: 24px; }
+      .hero h1 { font-size: 27px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Bandeau supérieur -->
-  <div class="top-banner py-2 text-center">
-    <i class="bi bi-truck me-1"></i> Livraison gratuite dès 900 € d'achat partout en France
-  </div>
+  <div class="topbar">Livraison gratuite dès 900 € d'achat • Expédition directe usine & pose décennale</div>
 
-  <!-- Barre de navigation -->
-  <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top py-3">
-    <div class="container">
-      <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
-        <span class="badge bg-success me-2 p-2"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+  <header>
+    <div class="nav">
+      <a href="#" class="brand">
+        <div class="logo-box">CD</div>
         <div>
-          <span class="d-block lh-1" style="color: var(--cd-green);">Carreaux Das</span>
-          <small class="text-muted fw-normal" style="font-size: 0.7rem;">Négoce Carrelage Direct & Pose Décennale</small>
+          <div class="brand-title">Carreaux Das</div>
+          <span class="brand-sub">Négoce Carrelage Direct & Pose Décennale</span>
         </div>
       </a>
+      <div class="nav-links">
+        <a href="#catalogue">Catalogue</a>
+        <a href="#fournitures">Fournitures</a>
+        <a href="#pose" class="btn btn-gold" style="padding:7px 14px;">Forfait Pose & TVA 10%</a>
+        <button class="btn btn-green" onclick="openCart()">Panier (<span id="cartCount">0</span>)</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="orderBanner" class="alert-banner"></div>
+
+    <section class="hero">
+      <div>
+        <span class="badge-tag">Premium 1er Choix Rectifié</span>
+        <h1>Le carrelage d'architecte à prix direct négoce, livré chez vous ou posé par nos soins.</h1>
+        <p>Sélection directe d'usines européennes en grès cérame pleine masse. Commandez vos échantillons ou calculez votre surface exacte avec marge de coupe incluse.</p>
+        <div class="hero-actions">
+          <a href="#catalogue" class="btn btn-green">Explorer le catalogue</a>
+          <button class="btn btn-outline" onclick="addSample()">Commander un échantillon (5 €)</button>
+        </div>
+      </div>
+      <img class="hero-img" src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=950&q=80" alt="Carrelage grès cérame grand format">
+    </section>
+
+    <div class="trust-bar">
+      <div class="trust-item"><span>Garantie Décennale DTU</span><span class="trust-pill">APRIL</span></div>
+      <div class="trust-item"><span>Paiement Sécurisé</span><span class="trust-pill">Stripe</span></div>
+      <div class="trust-item"><span>Même Bain Garanti</span><span class="trust-pill">1er Choix</span></div>
+      <div class="trust-item"><span>Livraison Camion Hayon</span><span class="trust-pill">900 €</span></div>
+    </div>
+
+    <section id="catalogue">
+      <div class="section-head">
+        <h2>Catalogue Carrelage & Outillage</h2>
+        <span style="font-size:13px;color:var(--muted);">Tarifs TTC au m² — Stock mis à jour en temps réel</span>
+      </div>
+      <div class="filters">
+        <button class="pill active" onclick="filterCat('Tous', this)">Tous les modèles</button>
+        <button class="pill" onclick="filterCat('Effet Pierre', this)">Effet Pierre</button>
+        <button class="pill" onclick="filterCat('Effet Marbre', this)">Effet Marbre</button>
+        <button class="pill" onclick="filterCat('Effet Bois', this)">Effet Bois</button>
+        <button class="pill" onclick="filterCat('Effet Béton', this)">Effet Béton</button>
+        <button class="pill" onclick="filterCat('Extérieur R11', this)">Extérieur R11</button>
+        <button class="pill" onclick="filterCat('Fournitures', this)">Fournitures & Colles</button>
+      </div>
+      <div class="grid" id="productGrid"></div>
+    </section>
+
+    <section id="pose" class="pose-box">
+      <div>
+        <span class="badge-tag">RENOV'IT SARL • Loiret & Île-de-France</span>
+        <h2 style="margin-top:10px;">Forfait Pose Clé en Main & TVA réduite 10 %</h2>
+        <p style="color:var(--muted);font-size:14px;">Pour tout logement de plus de 2 ans, profitez de la TVA à 10 % sur le carrelage et la main-d'œuvre en confiant la pose à notre équipe qualifiée.</p>
+        <ul class="pose-list">
+          <li>• Préparation des supports, ragréage et natte d'étanchéité</li>
+          <li>• Double encollage mortier-colle flex C2TE S1</li>
+          <li>• Pose grand format, joints hydrofuges et plinthes assorties</li>
+        </ul>
+      </div>
+      <div style="background:var(--cream);padding:20px;border-radius:12px;border:1px solid var(--border);">
+        <h3 style="color:var(--green);margin-bottom:12px;font-size:17px;">Demander un devis pose gratuit</h3>
+        <input type="text" id="qName" class="input" placeholder="Votre nom / prénom">
+        <input type="tel" id="qPhone" class="input" placeholder="Téléphone">
+        <input type="text" id="qCity" class="input" placeholder="Ville du chantier (ex: Montargis, Nemours...)">
+        <input type="number" id="qSurface" class="input" placeholder="Surface estimée en m²">
+        <textarea id="qDetails" class="input" rows="2" placeholder="Modèle souhaité, dépose ancien carrelage..."></textarea>
+        <button class="btn btn-green" style="width:100%;" onclick="sendQuote()">Envoyer ma demande de devis</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div>
+        <strong>Carreaux Das</strong> — Marque commerciale de <strong>RENOV'IT SARL</strong> (SIRET 991 002 577 00013)<br>
+        16 Rue Henriet Rouard, 45200 Montargis • Assurance Décennale APRIL
+      </div>
+      <div>
+        <button class="btn btn-outline" style="padding:7px 14px;font-size:12px;" onclick="openAdmin()">Accès Gérant</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modale Calculateur de surface avant ajout panier -->
+  <div class="modal" id="calcModal">
+    <div class="modal-box">
+      <h3 id="calcTitle">Calculer ma surface</h3>
+      <p id="calcMeta" style="font-size:13px;color:var(--muted);margin-bottom:12px;"></p>
+      <label style="font-size:13px;font-weight:600;">Surface nette de votre pièce (en m²) :</label>
+      <input type="number" id="calcInputM2" class="input" value="20" min="1" step="0.5" oninput="updateCalc()">
+      <label style="font-size:13px;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <input type="checkbox" id="calcMargin" checked onchange="updateCalc()"> Ajouter 10 % de marge de coupe recommandée (DTU)
+      </label>
+      <div class="calc-preview" id="calcSummary"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="closeModals()">Annuler</button>
+        <button class="btn btn-green" onclick="confirmAddToCart()">Ajouter au panier</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Panier & Stripe -->
+  <div class="modal" id="cartModal">
+    <div class="modal-box">
+      <h3>Votre Panier Carreaux Das</h3>
+      <div id="cartItems" style="margin-bottom:14px;font-size:14px;"></div>
+      <div id="shippingInfo" style="font-size:13px;color:var(--green);margin-bottom:8px;"></div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:16px;">Total TTC : <span id="cartTotal">0.00</span> €</div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="closeModals()">Continuer</button>
+        <button class="btn btn-green" onclick="checkoutStripe()">Payer par carte (Stripe)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Accès Gérant -->
+  <div class="modal" id="adminModal">
+    <div class="modal-box">
+      <h3>Accès Gérant — Carreaux Das</h3>
+      <div id="adminLoginStep">
+        <input type="password" id="adminPwd" class="input" placeholder="Mot de passe gérant (ADMIN_PASSWORD)">
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button class="btn btn-outline" onclick="closeModals()">Fermer</button>
+          <button class="btn btn-green" onclick="loginAdmin()">Connexion</button>
+        </div>
+      </div>
+      <div id="adminPanelStep" style="display:none;">
+        <div style="background:var(--green-soft);color:var(--green);padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:12px;">
+          Catalogue en ligne accessible
+        </div>
+        <input type="text" id="pName" class="input" placeholder="Nom du modèle (ex: Travertin Toscane)">
+        <select id="pCat" class="input">
+          <option>Effet Pierre</option>
+          <option>Effet Marbre</option>
+          <option>Effet Bois</option>
+          <option>Effet Béton</option>
+          <option>Extérieur R11</option>
+          <option>Fournitures</option>
+        </select>
+        <input type="text" id="pFormat" class="input" placeholder="Format (ex: 60x60 cm • Rectifié R10)">
+        <input type="number" id="pPrice" class="input" step="0.01" placeholder="Prix TTC / m² ou unité (ex: 24.90)">
+        <input type="number" id="pStock" class="input" placeholder="Stock en m² ou sacs (ex: 150)">
+        <input type="text" id="pImg" class="input" placeholder="Lien photo URL (optionnel)">
+        <button class="btn btn-green" style="width:100%;margin-bottom:16px;" onclick="saveProduct()">Ajouter au catalogue</button>
+        <div id="adminProductsList" style="font-size:13px;border-top:1px solid var(--border);padding-top:10px;"></div>
+        <div style="text-align:right;margin-top:12px;">
+          <button class="btn btn-outline" onclick="closeModals()">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const baseProducts = [
+      { id: "b1", name: "Pierre de Vals Anthracite", category: "Effet Pierre", format: "60x60 cm • Grès Cérame Rectifié R10", price_m2: 26.90, stock_m2: 145, image_url: "https://images.unsplash.com/photo-1615873968403-89e068629265?auto=format&fit=crop&w=750&q=80" },
+      { id: "b2", name: "Calacatta Gold Veiné", category: "Effet Marbre", format: "60x120 cm • Rectifié Satiné", price_m2: 32.50, stock_m2: 90, image_url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=750&q=80" },
+      { id: "b3", name: "Chêne Naturel Miel", category: "Effet Bois", format: "20x120 cm • Imitation Parquet Rectifié", price_m2: 24.90, stock_m2: 180, image_url: "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?auto=format&fit=crop&w=750&q=80" },
+      { id: "b4", name: "Béton Ciré Gris Perle", category: "Effet Béton", format: "80x80 cm • Pleine Masse Rectifié", price_m2: 28.00, stock_m2: 110, image_url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=750&q=80" },
+      { id: "b5", name: "Dalle Terrasse Ardoise 20mm", category: "Extérieur R11", format: "60x60x2 cm • Antidérapant R11", price_m2: 34.90, stock_m2: 120, image_url: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=750&q=80" },
+      { id: "b6", name: "Mortier-Colle Flex C2TE S1 (Sac 25 kg)", category: "Fournitures", format: "Sac 25 kg • Gris ou Blanc", price_m2: 18.50, stock_m2: 85, image_url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=750&q=80", isUnit: true }
+    ];
+
+    let dbProducts = [];
+    let allProducts = [...baseProducts];
+    let currentCat = "Tous";
+    let cart = [];
+    let selectedProduct = null;
+    let adminPassword = "";
+
+    // Notification retour Stripe
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("commande") === "validee") {
+      const b = document.getElementById("orderBanner");
+      b.style.display = "block";
+      b.textContent = "Merci ! Votre paiement Stripe a bien été validé. Notre équipe prépare votre commande Carreaux Das.";
+    }
+
+    async function loadProducts() {
+      try {
+        const res = await fetch("/api/products");
+        if (res.ok) {
+          const data = await res.json();
+          dbProducts = Array.isArray(data.products) ? data.products : [];
+          allProducts = [...dbProducts, ...baseProducts];
+        }
+      } catch (e) {}
+      renderProducts();
+    }
+
+    function filterCat(cat, btn) {
+      currentCat = cat;
+      document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      renderProducts();
+    }
+
+    function renderProducts() {
+      const grid = document.getElementById("productGrid");
+      const list = currentCat === "Tous" ? allProducts : allProducts.filter(p => p.category === currentCat);
+      grid.innerHTML = list.map((p, idx) => `
+        <div class="card">
+          <img src="${p.image_url || baseProducts[0].image_url}" alt="${p.name}">
+          <div class="card-body">
+            <div>
+              <div class="card-cat">${p.category}</div>
+              <div class="card-title">${p.name}</div>
+              <div class="card-meta">${p.format} • Stock : ${p.stock_m2} ${p.isUnit ? "unités" : "m²"}</div>
+            </div>
+            <div class="card-footer">
+              <div class="card-price">${Number(p.price_m2).toFixed(2)} €<small style="font-size:12px;font-weight:500;">${p.isUnit ? "/sac" : "/m²"}</small></div>
+              <button class="btn btn-green" onclick="openCalc(${idx})">Commander</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function openCalc(idx) {
+      const list = currentCat === "Tous" ? allProducts : allProducts.filter(p => p.category === currentCat);
+      selectedProduct = list[idx];
+      document.getElementById("calcTitle").textContent = selectedProduct.name;
+      document.getElementById("calcMeta").textContent = `${selectedProduct.format} — ${Number(selectedProduct.price_m2).toFixed(2)} € TTC`;
+      document.getElementById("calcInputM2").value = selectedProduct.isUnit ? 5 : 20;
+      document.getElementById("calcMargin").parentElement.style.display = selectedProduct.isUnit ? "none" : "flex";
+      updateCalc();
+      document.getElementById("calcModal").classList.add("open");
+    }
+
+    function updateCalc() {
+      const raw = Math.max(1, Number(document.getElementById("calcInputM2").value || 1));
+      const withMargin = (!selectedProduct.isUnit && document.getElementById("calcMargin").checked) ? Math.ceil(raw * 1.1 * 10) / 10 : raw;
+      const total = withMargin * Number(selectedProduct.price_m2);
+      document.getElementById("calcSummary").innerHTML = selectedProduct.isUnit
+        ? `Quantité : <strong>${withMargin} unités</strong> — Sous-total : <strong>${total.toFixed(2)} € TTC</strong>`
+        : `Surface retenue (avec coupe) : <strong>${withMargin.toFixed(1)} m²</strong> — Sous-total : <strong>${total.toFixed(2)} € TTC</strong>`;
+    }
+
+    function confirmAddToCart() {
+      const raw = Math.max(1, Number(document.getElementById("calcInputM2").value || 1));
+      const qty = (!selectedProduct.isUnit && document.getElementById("calcMargin").checked) ? Math.ceil(raw * 1.1 * 10) / 10 : raw;
+      const totalPrice = qty * Number(selectedProduct.price_m2);
+      cart.push({
+        name: `${selectedProduct.name} (${qty} ${selectedProduct.isUnit ? "unités" : "m²"})`,
+        totalPrice
+      });
+      document.getElementById("cartCount").textContent = cart.length;
+      closeModals();
+      openCart();
+    }
+
+    function addSample() {
+      cart.push({ name: "Échantillon Carrelage (Envoi Colissimo)", totalPrice: 5 });
+      document.getElementById("cartCount").textContent = cart.length;
+      openCart();
+    }
+
+    function openCart() {
+      const list = document.getElementById("cartItems");
+      list.innerHTML = cart.length
+        ? cart.map((i, idx) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;"><span>${i.name}</span><strong>${i.totalPrice.toFixed(2)} € <a href="#" onclick="removeCart(${idx});return false;" style="color:#b91c1c;margin-left:6px;">×</a></strong></div>`).join("")
+        : "Votre panier est vide.";
+      const subTotal = cart.reduce((s, i) => s + i.totalPrice, 0);
+      const shipping = subTotal === 0 || subTotal >= 900 ? 0 : 79;
+      document.getElementById("shippingInfo").textContent = subTotal === 0 ? "" : (shipping === 0 ? "Livraison camion hayon OFFERTE (commande ≥ 900 €)" : `Livraison palette camion hayon : 79.00 € (offerte dès 900 €)`);
+      document.getElementById("cartTotal").textContent = (subTotal + shipping).toFixed(2);
+      document.getElementById("cartModal").classList.add("open");
+    }
+
+    function removeCart(idx) {
+      cart.splice(idx, 1);
+      document.getElementById("cartCount").textContent = cart.length;
+      openCart();
+    }
+
+    async function checkoutStripe() {
+      if (!cart.length) return;
+      const subTotal = cart.reduce((s, i) => s + i.totalPrice, 0);
+      const payloadItems = [...cart];
+      if (subTotal < 900) {
+        payloadItems.push({ name: "Forfait Livraison Palette Camion Hayon", totalPrice: 79 });
+      }
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: payloadItems })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert(data.error || "Erreur lors de l'initialisation Stripe.");
+    }
+
+    async function sendQuote() {
+      const payload = {
+        client_name: document.getElementById("qName").value,
+        phone: document.getElementById("qPhone").value,
+        city: document.getElementById("qCity").value,
+        surface_m2: document.getElementById("qSurface").value,
+        details: document.getElementById("qDetails").value
+      };
+      if (!payload.client_name || !payload.phone) {
+        alert("Merci d'indiquer votre nom et votre téléphone.");
+        return;
+      }
+      await fetch("/api/quotes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+      alert("Votre demande de devis pose RENOV'IT SARL a bien été envoyée !");
+      document.getElementById("qName").value = "";
+      document.getElementById("qPhone").value = "";
+      document.getElementById("qCity").value = "";
+      document.getElementById("qSurface").value = "";
+      document.getElementById("qDetails").value = "";
+    }
+
+    function openAdmin() {
+      document.getElementById("adminModal").classList.add("open");
+    }
+
+    async function loginAdmin() {
+      const pwd = document.getElementById("adminPwd").value;
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pwd })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        adminPassword = pwd;
+        document.getElementById("adminLoginStep").style.display = "none";
+        document.getElementById("adminPanelStep").style.display = "block";
+        renderAdminProducts();
+      } else {
+        alert(data.error || "Mot de passe incorrect.");
+      }
+    }
+
+    function renderAdminProducts() {
+      const box = document.getElementById("adminProductsList");
+      box.innerHTML = dbProducts.length
+        ? "<strong>Modèles ajoutés en base Neon :</strong>" + dbProducts.map(p => `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;"><span>${p.name} (${p.price_m2} €/m²)</span><button class="btn btn-danger" onclick="deleteProduct(${p.id})">Supprimer</button></div>`).join("")
+        : "Aucun modèle personnalisé enregistré dans Neon pour le moment.";
+    }
+
+    async function saveProduct() {
+      const payload = {
+        password: adminPassword,
+        name: document.getElementById("pName").value,
+        category: document.getElementById("pCat").value,
+        format: document.getElementById("pFormat").value,
+        price_m2: document.getElementById("pPrice").value,
+        stock_m2: document.getElementById("pStock").value,
+        image_url: document.getElementById("pImg").value
+      };
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.ok) {
+        alert("Modèle enregistré dans Neon !");
+        await loadProducts();
+        renderAdminProducts();
+      } else {
+        alert(data.error || "Erreur d'enregistrement.");
+      }
+    }
+
+    async function deleteProduct(id) {
+      const res = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: adminPassword })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        await loadProducts();
+        renderAdminProducts();
+      }
+    }
+
+    function closeModals() {
+      document.querySelectorAll(".modal").forEach(m => m.classList.remove("open"));
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>

@@ -1,18 +1,33 @@
-import { Hono } from "hono";
-import { handle } from "hono/cloudflare-pages";
-import { neon } from "@neondatabase/serverless";
-
-type Bindings = {
+interface Env {
   DATABASE_URL?: string;
   ADMIN_PASSWORD?: string;
   STRIPE_SECRET_KEY?: string;
-};
+}
 
-const app = new Hono<{ Bindings: Bindings }>().basePath("/api");
+async function runSql(databaseUrl: string, query: string, params: any[] = []) {
+  const url = new URL(databaseUrl);
+  const endpoint = `https://${url.hostname}/sql`;
 
-async function ensureTables(sql: any) {
-  await sql`
-    CREATE TABLE IF NOT EXISTS custom_products (
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Neon-Connection-String": databaseUrl,
+    },
+    body: JSON.stringify({ query, params }),
+  });
+
+  const data: any = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.message || data?.error || "Erreur SQL Neon");
+  }
+  return data.rows || [];
+}
+
+async function ensureTables(dbUrl: string) {
+  await runSql(
+    dbUrl,
+    `CREATE TABLE IF NOT EXISTS custom_products (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       category TEXT NOT NULL,
@@ -22,12 +37,12 @@ async function ensureTables(sql: any) {
       image_url TEXT,
       seo_description TEXT,
       created_at TIMESTAMP DEFAULT NOW()
-    )
-  `;
-  await sql`ALTER TABLE custom_products ADD COLUMN IF NOT EXISTS seo_description TEXT`;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS quote_requests (
+    )`
+  );
+  await runSql(dbUrl, `ALTER TABLE custom_products ADD COLUMN IF NOT EXISTS seo_description TEXT`);
+  await runSql(
+    dbUrl,
+    `CREATE TABLE IF NOT EXISTS quote_requests (
       id SERIAL PRIMARY KEY,
       client_name TEXT NOT NULL,
       phone TEXT NOT NULL,
@@ -35,173 +50,200 @@ async function ensureTables(sql: any) {
       surface_m2 NUMERIC NOT NULL,
       details TEXT,
       created_at TIMESTAMP DEFAULT NOW()
-    )
-  `;
+    )`
+  );
 }
 
-app.get("/health", async (c) => {
-  let dbOk = false;
-  if (c.env.DATABASE_URL) {
+function json(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+export const onRequest: PagesFunction<Env> = async (context) => {
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const path = url.pathname.replace(/^\/api/, "");
+  const method = request.method;
+
+  if (path === "/health" && method === "GET") {
+    let dbOk = false;
+    if (env.DATABASE_URL) {
+      try {
+        await runSql(env.DATABASE_URL, "SELECT 1");
+        dbOk = true;
+      } catch {
+        dbOk = false;
+      }
+    }
+    return json({
+      ok: true,
+      database: dbOk,
+      adminConfigured: Boolean(env.ADMIN_PASSWORD),
+      stripeConfigured: Boolean(env.STRIPE_SECRET_KEY),
+    });
+  }
+
+  if (path === "/products" && method === "GET") {
+    if (!env.DATABASE_URL) return json({ products: [] });
     try {
-      const sql = neon(c.env.DATABASE_URL);
-      await sql`SELECT 1`;
-      dbOk = true;
-    } catch {
-      dbOk = false;
+      await ensureTables(env.DATABASE_URL);
+      const rows = await runSql(env.DATABASE_URL, "SELECT * FROM custom_products ORDER BY id DESC");
+      return json({ products: rows });
+    } catch (err: any) {
+      return json({ products: [], error: err.message }, 500);
     }
   }
-  return c.json({
-    ok: true,
-    database: dbOk,
-    adminConfigured: Boolean(c.env.ADMIN_PASSWORD),
-    stripeConfigured: Boolean(c.env.STRIPE_SECRET_KEY),
-  });
-});
 
-app.get("/products", async (c) => {
-  if (!c.env.DATABASE_URL) {
-    return c.json({ products: [] });
-  }
-  try {
-    const sql = neon(c.env.DATABASE_URL);
-    await ensureTables(sql);
-    const rows = await sql`SELECT * FROM custom_products ORDER BY id DESC`;
-    return c.json({ products: rows });
-  } catch (err: any) {
-    return c.json({ products: [], error: err.message }, 500);
-  }
-});
-
-app.post("/admin/login", async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  if (!c.env.ADMIN_PASSWORD) {
-    return c.json({ ok: false, error: "Variable ADMIN_PASSWORD manquante sur Cloudflare." }, 503);
-  }
-  if ((body.password || "").trim() !== c.env.ADMIN_PASSWORD.trim()) {
-    return c.json({ ok: false, error: "Mot de passe gérant incorrect." }, 401);
-  }
-  return c.json({ ok: true });
-});
-
-app.post("/products", async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  if (!c.env.ADMIN_PASSWORD || (body.password || "").trim() !== c.env.ADMIN_PASSWORD.trim()) {
-    return c.json({ ok: false, error: "Non autorisé." }, 401);
-  }
-  if (!c.env.DATABASE_URL) {
-    return c.json({ ok: false, error: "DATABASE_URL non configurée sur Cloudflare." }, 503);
-  }
-  try {
-    const sql = neon(c.env.DATABASE_URL);
-    await ensureTables(sql);
-    const [row] = await sql`
-      INSERT INTO custom_products (name, category, format, price_m2, stock_m2, image_url, seo_description)
-      VALUES (
-        ${body.name},
-        ${body.category},
-        ${body.format},
-        ${Number(body.price_m2)},
-        ${Number(body.stock_m2)},
-        ${body.image_url || ""},
-        ${body.seo_description || ""}
-      )
-      RETURNING *
-    `;
-    return c.json({ ok: true, product: row });
-  } catch (err: any) {
-    return c.json({ ok: false, error: err.message }, 500);
-  }
-});
-
-app.put("/products/:id", async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  if (!c.env.ADMIN_PASSWORD || (body.password || "").trim() !== c.env.ADMIN_PASSWORD.trim()) {
-    return c.json({ ok: false, error: "Non autorisé." }, 401);
-  }
-  if (!c.env.DATABASE_URL) {
-    return c.json({ ok: false, error: "DATABASE_URL non configurée sur Cloudflare." }, 503);
-  }
-  try {
-    const sql = neon(c.env.DATABASE_URL);
-    await ensureTables(sql);
-    const id = Number(c.req.param("id"));
-    const [row] = await sql`
-      UPDATE custom_products
-      SET
-        name = ${body.name},
-        category = ${body.category},
-        format = ${body.format},
-        price_m2 = ${Number(body.price_m2)},
-        stock_m2 = ${Number(body.stock_m2)},
-        image_url = ${body.image_url || ""},
-        seo_description = ${body.seo_description || ""}
-      WHERE id = ${id}
-      RETURNING *
-    `;
-    return c.json({ ok: true, product: row });
-  } catch (err: any) {
-    return c.json({ ok: false, error: err.message }, 500);
-  }
-});
-
-app.delete("/products/:id", async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  if (!c.env.ADMIN_PASSWORD || (body.password || "").trim() !== c.env.ADMIN_PASSWORD.trim()) {
-    return c.json({ ok: false, error: "Non autorisé." }, 401);
-  }
-  if (!c.env.DATABASE_URL) {
-    return c.json({ ok: false, error: "DATABASE_URL non configurée sur Cloudflare." }, 503);
-  }
-  try {
-    const sql = neon(c.env.DATABASE_URL);
-    await ensureTables(sql);
-    await sql`DELETE FROM custom_products WHERE id = ${Number(c.req.param("id"))}`;
-    return c.json({ ok: true });
-  } catch (err: any) {
-    return c.json({ ok: false, error: err.message }, 500);
-  }
-});
-
-app.post("/quotes", async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  if (!c.env.DATABASE_URL) {
-    return c.json({ ok: true, localOnly: true });
-  }
-  try {
-    const sql = neon(c.env.DATABASE_URL);
-    await ensureTables(sql);
-    await sql`
-      INSERT INTO quote_requests (client_name, phone, city, surface_m2, details)
-      VALUES (${body.client_name}, ${body.phone}, ${body.city}, ${Number(body.surface_m2 || 0)}, ${body.details || ""})
-    `;
-    return c.json({ ok: true });
-  } catch (err: any) {
-    return c.json({ ok: false, error: err.message }, 500);
-  }
-});
-
-app.post("/checkout", async (c) => {
-  if (!c.env.STRIPE_SECRET_KEY) {
-    return c.json({ ok: false, error: "Variable STRIPE_SECRET_KEY manquante sur Cloudflare." }, 503);
-  }
-  const body = await c.req.json().catch(() => ({}));
-  const items = Array.isArray(body.items) ? body.items : [];
-  if (!items.length) {
-    return c.json({ ok: false, error: "Votre panier est vide." }, 400);
+  if (path === "/admin/login" && method === "POST") {
+    const body: any = await request.json().catch(() => ({}));
+    if (!env.ADMIN_PASSWORD) {
+      return json({ ok: false, error: "Variable ADMIN_PASSWORD manquante sur Cloudflare." }, 503);
+    }
+    if ((body.password || "").trim() !== env.ADMIN_PASSWORD.trim()) {
+      return json({ ok: false, error: "Mot de passe gérant incorrect." }, 401);
+    }
+    return json({ ok: true });
   }
 
-  const origin = new URL(c.req.url).origin;
-  const params = new URLSearchParams();
-  params.append("mode", "payment");
-  params.append("success_url", `${origin}/?commande=validee`);
-  params.append("cancel_url", `${origin}/?commande=annulee`);
+  if (path === "/products" && method === "POST") {
+    const body: any = await request.json().catch(() => ({}));
+    if (!env.ADMIN_PASSWORD || (body.password || "").trim() !== env.ADMIN_PASSWORD.trim()) {
+      return json({ ok: false, error: "Non autorisé." }, 401);
+    }
+    if (!env.DATABASE_URL) {
+      return json({ ok: false, error: "DATABASE_URL non configurée sur Cloudflare." }, 503);
+    }
+    try {
+      await ensureTables(env.DATABASE_URL);
+      const rows = await runSql(
+        env.DATABASE_URL,
+        `INSERT INTO custom_products (name, category, format, price_m2, stock_m2, image_url, seo_description)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [
+          body.name,
+          body.category,
+          body.format,
+          Number(body.price_m2),
+          Number(body.stock_m2),
+          body.image_url || "",
+          body.seo_description || "",
+        ]
+      );
+      return json({ ok: true, product: rows[0] });
+    } catch (err: any) {
+      return json({ ok: false, error: err.message }, 500);
+    }
+  }
 
-  items.forEach((item: any, i: number) => {
-    params.append(`line_items[${i}][price_data][currency]`, "eur");
-    params.append(`line_items[${i}][price_data][product_data][name]`, item.name);
-    params.append(`line_items[${i}][price_data][unit_amount]`, String(Math.round(Number(item.totalPrice) * 100)));
-    params.append(`line_items[${i}][quantity]`, "1");
-  });
+  const prodMatch = path.match(/^\/products\/(\d+)$/);
+  if (prodMatch && method === "PUT") {
+    const id = Number(prodMatch[1]);
+    const body: any = await request.json().catch(() => ({}));
+    if (!env.ADMIN_PASSWORD || (body.password || "").trim() !== env.ADMIN_PASSWORD.trim()) {
+      return json({ ok: false, error: "Non autorisé." }, 401);
+    }
+    if (!env.DATABASE_URL) {
+      return json({ ok: false, error: "DATABASE_URL non configurée sur Cloudflare." }, 503);
+    }
+    try {
+      await ensureTables(env.DATABASE_URL);
+      const rows = await runSql(
+        env.DATABASE_URL,
+        `UPDATE custom_products
+         SET name = $1, category = $2, format = $3, price_m2 = $4, stock_m2 = $5, image_url = $6, seo_description = $7
+         WHERE id = $8 RETURNING *`,
+        [
+          body.name,
+          body.category,
+          body.format,
+          Number(body.price_m2),
+          Number(body.stock_m2),
+          body.image_url || "",
+          body.seo_description || "",
+          id,
+        ]
+      );
+      return json({ ok: true, product: rows[0] });
+    } catch (err: any) {
+      return json({ ok: false, error: err.message }, 500);
+    }
+  }
 
-  const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-    method: "POST",
+  if (prodMatch && method === "DELETE") {
+    const id = Number(prodMatch[1]);
+    const body: any = await request.json().catch(() => ({}));
+    if (!env.ADMIN_PASSWORD || (body.password || "").trim() !== env.ADMIN_PASSWORD.trim()) {
+      return json({ ok: false, error: "Non autorisé." }, 401);
+    }
+    if (!env.DATABASE_URL) {
+      return json({ ok: false, error: "DATABASE_URL non configurée sur Cloudflare." }, 503);
+    }
+    try {
+      await ensureTables(env.DATABASE_URL);
+      await runSql(env.DATABASE_URL, "DELETE FROM custom_products WHERE id = $1", [id]);
+      return json({ ok: true });
+    } catch (err: any) {
+      return json({ ok: false, error: err.message }, 500);
+    }
+  }
+
+  if (path === "/quotes" && method === "POST") {
+    const body: any = await request.json().catch(() => ({}));
+    if (!env.DATABASE_URL) return json({ ok: true, localOnly: true });
+    try {
+      await ensureTables(env.DATABASE_URL);
+      await runSql(
+        env.DATABASE_URL,
+        `INSERT INTO quote_requests (client_name, phone, city, surface_m2, details)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [body.client_name, body.phone, body.city, Number(body.surface_m2 || 0), body.details || ""]
+      );
+      return json({ ok: true });
+    } catch (err: any) {
+      return json({ ok: false, error: err.message }, 500);
+    }
+  }
+
+  if (path === "/checkout" && method === "POST") {
+    if (!env.STRIPE_SECRET_KEY) {
+      return json({ ok: false, error: "Variable STRIPE_SECRET_KEY manquante sur Cloudflare." }, 503);
+    }
+    const body: any = await request.json().catch(() => ({}));
+    const items = Array.isArray(body.items) ? body.items : [];
+    if (!items.length) {
+      return json({ ok: false, error: "Votre panier est vide." }, 400);
+    }
+
+    const origin = url.origin;
+    const params = new URLSearchParams();
+    params.append("mode", "payment");
+    params.append("success_url", `${origin}/?commande=validee`);
+    params.append("cancel_url", `${origin}/?commande=annulee`);
+
+    items.forEach((item: any, i: number) => {
+      params.append(`line_items[${i}][price_data][currency]`, "eur");
+      params.append(`line_items[${i}][price_data][product_data][name]`, item.name);
+      params.append(`line_items[${i}][price_data][unit_amount]`, String(Math.round(Number(item.totalPrice) * 100)));
+      params.append(`line_items[${i}][quantity]`, "1");
+    });
+
+    const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.STRIPE_SECRET_KEY.trim()}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+    });
+
+    const session: any = await res.json();
+    if (!res.ok) {
+      return json({ ok: false, error: session?.error?.message || "Erreur Stripe" }, 400);
+    }
+    return json({ ok: true, url: session.url });
+  }
+
+  return json({ error: "Route introuvable" }, 404);
+};

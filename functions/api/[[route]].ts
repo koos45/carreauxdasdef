@@ -39,7 +39,6 @@ async function ensureTables(sql: any) {
   `;
 }
 
-// 1. Santé des services
 app.get("/health", async (c) => {
   let dbOk = false;
   if (c.env.DATABASE_URL) {
@@ -59,7 +58,6 @@ app.get("/health", async (c) => {
   });
 });
 
-// 2. Liste des produits depuis Neon (uniquement vos produits)
 app.get("/products", async (c) => {
   if (!c.env.DATABASE_URL) {
     return c.json({ products: [] });
@@ -74,7 +72,6 @@ app.get("/products", async (c) => {
   }
 });
 
-// 3. Connexion Accès Gérant
 app.post("/admin/login", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   if (!c.env.ADMIN_PASSWORD) {
@@ -86,7 +83,6 @@ app.post("/admin/login", async (c) => {
   return c.json({ ok: true });
 });
 
-// 4. Ajout d'un modèle
 app.post("/products", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   if (!c.env.ADMIN_PASSWORD || (body.password || "").trim() !== c.env.ADMIN_PASSWORD.trim()) {
@@ -117,7 +113,6 @@ app.post("/products", async (c) => {
   }
 });
 
-// 5. Modification d'un modèle existant
 app.put("/products/:id", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   if (!c.env.ADMIN_PASSWORD || (body.password || "").trim() !== c.env.ADMIN_PASSWORD.trim()) {
@@ -149,7 +144,6 @@ app.put("/products/:id", async (c) => {
   }
 });
 
-// 6. Suppression d'un modèle
 app.delete("/products/:id", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   if (!c.env.ADMIN_PASSWORD || (body.password || "").trim() !== c.env.ADMIN_PASSWORD.trim()) {
@@ -168,7 +162,6 @@ app.delete("/products/:id", async (c) => {
   }
 });
 
-// 7. Demande de devis pose TVA 10%
 app.post("/quotes", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   if (!c.env.DATABASE_URL) {
@@ -187,7 +180,6 @@ app.post("/quotes", async (c) => {
   }
 });
 
-// 8. Paiement Stripe Checkout
 app.post("/checkout", async (c) => {
   if (!c.env.STRIPE_SECRET_KEY) {
     return c.json({ ok: false, error: "Variable STRIPE_SECRET_KEY manquante sur Cloudflare." }, 503);
@@ -203,3 +195,13 @@ app.post("/checkout", async (c) => {
   params.append("mode", "payment");
   params.append("success_url", `${origin}/?commande=validee`);
   params.append("cancel_url", `${origin}/?commande=annulee`);
+
+  items.forEach((item: any, i: number) => {
+    params.append(`line_items[${i}][price_data][currency]`, "eur");
+    params.append(`line_items[${i}][price_data][product_data][name]`, item.name);
+    params.append(`line_items[${i}][price_data][unit_amount]`, String(Math.round(Number(item.totalPrice) * 100)));
+    params.append(`line_items[${i}][quantity]`, "1");
+  });
+
+  const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
